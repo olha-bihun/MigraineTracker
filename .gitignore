@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+
+# Xcode local state and build output
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+*.xcresult
+*.ipa
+*.dSYM/
+
+# Local credentials and configuration
+.env
+.env.*
+!.env.example
+*.p12
+*.mobileprovision
+
+# Local SwiftData / SQLite stores
+*.store
+*.store-shm
+*.store-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
