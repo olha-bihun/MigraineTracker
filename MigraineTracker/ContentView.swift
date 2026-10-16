@@ -7,6 +7,8 @@ struct ContentView: View {
     @Environment(\.dynamicTypeSize) private var textSize
     @Environment(\.colorScheme) private var colorScheme
     @Query(sort: \CustomTrigger.createdAt) private var customTriggers: [CustomTrigger]
+    @FocusState private var commentFocused: Bool
+    @State private var commentFrame: CGRect = .zero
     @State private var showingSettings = false
     @AppStorage("hiddenTriggers") private var hiddenTriggers = "[]"
     @AppStorage("triggerOrder") private var triggerOrder = "[]"
@@ -45,7 +47,7 @@ struct ContentView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text(L10n.text("Можливі тригери")).font(.headline).accessibilityAddTraits(.isHeader)
                             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: textSize.isAccessibilitySize ? 3 : 4), spacing: 12) {
-                                ForEach(TriggerOrder.sorted(TriggerCatalog.all + customTriggers.map(\.definition), preference: triggerOrder).filter { !TriggerOrder.hiddenIDs(hiddenTriggers).contains($0.id) || editor.snapshot.triggerIDs.contains($0.id) }) { trigger in
+                                ForEach(TriggerOrder.sorted(TriggerCatalog.all + customTriggers.map(\.definition), preference: triggerOrder).filter { !TriggerOrder.hiddenIDs(hiddenTriggers).contains($0.id) }) { trigger in
                                     TriggerTile(trigger: trigger, selected: editor.snapshot.triggerIDs.contains(trigger.id)) {
                                         var updated = editor.snapshot
                                         if updated.triggerIDs.contains(trigger.id) { updated.triggerIDs.remove(trigger.id) }
@@ -67,6 +69,10 @@ struct ContentView: View {
                                     save(updated)
                                 }
                             ), axis: .vertical)
+                            .focused($commentFocused)
+                            .background(GeometryReader { geometry in
+                                Color.clear.preference(key: CommentFrameKey.self, value: geometry.frame(in: .global))
+                            })
                             .lineLimit(3...6)
                             .disabled(!editor.isLoaded)
                             .accessibilityLabel(L10n.text("Коментар"))
@@ -88,9 +94,16 @@ struct ContentView: View {
                     .accessibilityLabel(L10n.text("Налаштування"))
             } }
         }
-        .sheet(isPresented: $showingSettings) { SettingsView() }
+        .onPreferenceChange(CommentFrameKey.self) { commentFrame = $0 }
+        .simultaneousGesture(SpatialTapGesture(coordinateSpace: .global).onEnded { tap in
+            if commentFocused && !commentFrame.contains(tap.location) {
+                commentFocused = false
+            }
+        })
+        .sheet(isPresented: $showingSettings) { SettingsView(hiddenPreference: $hiddenTriggers) }
         .onAppear(perform: loadSelectedDay)
         .onChange(of: date) { _, _ in
+            commentFocused = false
             deletedSnapshot = nil
             loadSelectedDay()
         }
@@ -158,7 +171,7 @@ struct ContentView: View {
                 get: { editor.snapshot.withoutAura },
                 set: { value in
                     var updated = editor.snapshot
-                    updated.setMigraine(withAura: updated.withAura, withoutAura: value)
+                    updated.toggleMigraine(aura: false, enabled: value)
                     save(updated)
                 }
             ))
@@ -168,7 +181,7 @@ struct ContentView: View {
                 get: { editor.snapshot.withAura },
                 set: { value in
                     var updated = editor.snapshot
-                    updated.setMigraine(withAura: value, withoutAura: updated.withoutAura)
+                    updated.toggleMigraine(aura: true, enabled: value)
                     save(updated)
                 }
             ))
@@ -221,4 +234,9 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .modelContainer(for: [DayEntry.self, CustomTrigger.self], inMemory: true)
+}
+
+private struct CommentFrameKey: PreferenceKey {
+    static let defaultValue: CGRect = .zero
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) { value = nextValue() }
 }

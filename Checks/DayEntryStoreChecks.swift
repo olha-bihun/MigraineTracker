@@ -174,6 +174,33 @@ struct DayEntryStoreChecks {
         let stillRecorded = try auraStore.load(date: date, timeZone: zone)
         precondition(stillRecorded.triggerIDs.contains(customID))
         print("PASS: independent migraine toggles, both types persist, clearing types preserves triggers, hiding leaves history intact")
+        var exclusive = DaySnapshot(triggerIDs: [customID], comment: "Keep this comment")
+        exclusive.toggleMigraine(aura: false, enabled: true)
+        precondition(exclusive.withoutAura && !exclusive.withAura)
+        exclusive.toggleMigraine(aura: true, enabled: true)
+        precondition(exclusive.withAura && !exclusive.withoutAura)
+        try auraStore.save(exclusive, date: date, timeZone: zone)
+        let savedExclusive = try auraStore.load(date: date, timeZone: zone)
+        precondition(savedExclusive == exclusive)
+        var exclusiveEditor = DayEditorState()
+        let exclusiveKey = DayEntry.key(for: date, timeZone: zone)
+        exclusiveEditor.load(key: exclusiveKey) { try auraStore.loadAll() }
+        var replacement = exclusive
+        replacement.toggleMigraine(aura: false, enabled: true)
+        var failingExclusiveStore = auraStore
+        failingExclusiveStore.commit = { _ in throw TestFailure.diskUnavailable }
+        exclusiveEditor.save(replacement, key: exclusiveKey) {
+            try failingExclusiveStore.save(replacement, date: date, timeZone: zone)
+        }
+        precondition(exclusiveEditor.snapshot == exclusive)
+        let afterFailedSwitch = try auraStore.load(date: date, timeZone: zone)
+        precondition(afterFailedSwitch == exclusive)
+        exclusive.toggleMigraine(aura: false, enabled: true)
+        precondition(exclusive.withoutAura && !exclusive.withAura)
+        exclusive.toggleMigraine(aura: false, enabled: false)
+        precondition(!exclusive.hasMigraine && exclusive.migraineKind == nil)
+        precondition(exclusive.comment == "Keep this comment" && exclusive.triggerIDs == [customID])
+        print("PASS: exclusive migraine switches, persistence, failed switch preserves selection and record")
         for emoji in ["🤕", "😵‍💫", "👨‍👩‍👧‍👦", "🇺🇦", "👍🏽", "1️⃣", "❤️"] { precondition(EmojiChoice.isValid(emoji), emoji) }
         for invalid in ["", "A", "1", "🤕😴", "hello"] { precondition(!EmojiChoice.isValid(invalid), invalid) }
         precondition(DaySnapshot(hasMigraine: true, migraineKind: "withAura").migraineEmoji == "😵‍💫")

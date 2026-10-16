@@ -47,7 +47,6 @@ struct TriggerTile: View {
     var body: some View {
         Button(action: action) {
             TriggerIllustration(trigger: trigger)
-                .frame(width: 23, height: 23)
                 .foregroundStyle(DiaryStyle.lavender)
                 .frame(width: 52, height: 52)
                 .background(DiaryStyle.lavender.opacity(selected ? 0.23 : 0.07), in: Circle())
@@ -81,6 +80,6 @@ struct TriggerTile: View {
 struct TriggerIllustration: View {
     let trigger: TriggerDefinition
     var body: some View {
-        Text(trigger.emoji).font(.system(size: 25)).accessibilityHidden(true)
+        Text(trigger.emoji).font(.system(size: 25)).fixedSize().accessibilityHidden(true)
     }
 }

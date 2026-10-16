@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct TriggerOrderView: View {
-    @AppStorage("hiddenTriggers") private var hiddenPreference = "[]"
+    @Binding var hiddenPreference: String
     @AppStorage("triggerOrder") private var preference = "[]"
     @Query(sort: \CustomTrigger.createdAt) private var customTriggers: [CustomTrigger]
     private var allTriggers: [TriggerDefinition] {

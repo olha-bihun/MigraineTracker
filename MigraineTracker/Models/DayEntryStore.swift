@@ -26,6 +26,15 @@ struct DaySnapshot: Equatable {
     var withAura: Bool { hasMigraine && (migraineKind == "withAura" || migraineKind == "both") }
     var withoutAura: Bool { hasMigraine && (migraineKind == "withoutAura" || migraineKind == "both") }
 
+    // Turning a type on replaces the other type; turning it off preserves the other.
+    mutating func toggleMigraine(aura: Bool, enabled: Bool) {
+        if aura {
+            setMigraine(withAura: enabled, withoutAura: enabled ? false : withoutAura)
+        } else {
+            setMigraine(withAura: enabled ? false : withAura, withoutAura: enabled)
+        }
+    }
+
     mutating func setMigraine(withAura: Bool, withoutAura: Bool) {
         hasMigraine = withAura || withoutAura
         migraineKind = withAura && withoutAura ? "both" : (withAura ? "withAura" : (withoutAura ? "withoutAura" : nil))

@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct SettingsView: View {
-    @AppStorage("hiddenTriggers") private var hiddenPreference = "[]"
+    @Binding var hiddenPreference: String
     @AppStorage("appLanguage") private var language = L10n.defaultLanguage
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
@@ -31,7 +31,7 @@ struct SettingsView: View {
                     }
                 }
                 Section {
-                    NavigationLink(L10n.text("Керування тригерами")) { TriggerOrderView() }
+                    NavigationLink(L10n.text("Керування тригерами")) { TriggerOrderView(hiddenPreference: $hiddenPreference) }
                 }
                 Section(L10n.text("Власні тригери")) {
                     ForEach(customTriggers.filter { !TriggerOrder.hiddenIDs(hiddenPreference).contains($0.id) }) { trigger in
