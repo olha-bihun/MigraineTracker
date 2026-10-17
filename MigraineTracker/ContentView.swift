@@ -122,7 +122,7 @@ struct ContentView: View {
                     DatePicker(L10n.text("Нова дата"), selection: $destinationDate, in: ...Date(), displayedComponents: .date)
                         .datePickerStyle(.graphical)
                     if let moveError { Text(moveError).foregroundStyle(.red) }
-                    Button(L10n.text("Перенести запис")) { moveRecord() }
+                    Button(L10n.text("Зберегти")) { moveRecord() }
                         .disabled(DayEntry.key(for: destinationDate, timeZone: timeZone) == DayEntry.key(for: date, timeZone: timeZone))
                 }
                 .environment(\.timeZone, timeZone)
@@ -146,7 +146,7 @@ struct ContentView: View {
 
     private var dayCard: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .top) {
+            HStack(alignment: .center) {
                 Text(MonthGrid.label(date, template: "d MMMM yyyy", timeZone: timeZone))
                     .font(.headline).fixedSize(horizontal: false, vertical: true)
                 Spacer()
@@ -165,6 +165,9 @@ struct ContentView: View {
                     } label: {
                         Image(systemName: "ellipsis").frame(width: 44, height: 44)
                     }.accessibilityLabel(L10n.text("Дії із записом"))
+                } else {
+                    Color.clear.frame(width: 44, height: 44)
+                        .accessibilityHidden(true)
                 }
             }
             Toggle("🤕 " + L10n.text("Мігрень без аури"), isOn: Binding(
